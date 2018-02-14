@@ -1,3 +1,5 @@
+import java.nio.charset.StandardCharsets;
+
 /**
     Author: Nils Sohn
     FeistelNetwork consists of 16 rounds. 
@@ -5,6 +7,8 @@
 */
 class FeistelNetwork{
     /* Initialize lookup tables */
+    private static int iterationCount = 0;
+
     private static final int[][] Expansion =
     {
         {32,1,2,3,4,5},
@@ -83,7 +87,11 @@ class FeistelNetwork{
         @return a 64-bit string generated after round 16.    
      */
     public static String iterate(String input, String[] subkeys){
-        return null;      
+        String left, right;
+        left = input.substring(input.length()/2);
+        right =  input.substring(0, input.length()/2);
+        right = xor(right, fFunction(left, subkeys[iterationCount++]));
+        return left + right ;
     }
     
     /**
@@ -96,7 +104,9 @@ class FeistelNetwork{
      * @return a 32-bit output F(r, key)
      */
     public static String fFunction(String r, String key) {
-        return null;    
+
+
+        return r;
     }
     
     /**
@@ -105,8 +115,15 @@ class FeistelNetwork{
      * @param secondInput - second string to XOR
      * @return resulting string of the XOR operation
      */
-    public static String xor(String firstInput, String secondInput) {        
-       return null;
+    public static String xor(String firstInput, String secondInput) {
+        byte[] firstBytes = firstInput.getBytes(StandardCharsets.UTF_8);
+        byte[] secondBytes = secondInput.getBytes(StandardCharsets.UTF_8);
+        int byteArraySize = firstBytes.length;
+        byte[] finalBytes = new byte[byteArraySize];
+        for(int i = 0; i < byteArraySize; i++) {
+            finalBytes[i] = (byte) (((int) firstBytes[i]) ^ ((int) secondBytes[i]));
+        }
+        return new String(firstBytes, StandardCharsets.UTF_8);
     }
     
     /**
@@ -115,6 +132,16 @@ class FeistelNetwork{
      * @return a 48-bit string
      */
     public static String expansion(String r) {
+//        byte[] expandedBytes = new byte[6];
+//        byte[] rBytes = r.getBytes(StandardCharsets.UTF_8);
+//
+//        for (int i = 0; i < 8; i++) {
+//            for (int j = 0; j < 6; j++) {
+//                int expansionIndex = Expansion[i][j];
+//                rBytes[expansionIndex/8] ;
+//            }
+//        }
+
        return null;
     }
     
