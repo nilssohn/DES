@@ -47,6 +47,7 @@ class KeySchedule{
      @return an array of 16 subkeys
      */
     public static String[] generateSubkeysForEncryption(String key){
+        // TODO
         String[] subkeys = new String[16];
 //        String firstOutput = pc_1(key);
 //        String c = firstOutput.substring(0, 28);

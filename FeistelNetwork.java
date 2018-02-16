@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 class FeistelNetwork{
     /* Initialize lookup tables */
     private static int iterationCount = 0;
+    private static final int EXPANSION_SIZE = 48;
 
     private static final int[][] Expansion =
     {
@@ -104,7 +105,7 @@ class FeistelNetwork{
      * @return a 32-bit output F(r, key)
      */
     public static String fFunction(String r, String key) {
-
+        // TODO: last
 
         return r;
     }
@@ -125,6 +126,10 @@ class FeistelNetwork{
         }
         return new String(firstBytes, StandardCharsets.UTF_8);
     }
+
+    private static void printBinaryString(byte b) {
+        System.out.println(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
+    }
     
     /**
      * Expand 32-bit input to 48-bit result using the expansion substitution table
@@ -132,17 +137,29 @@ class FeistelNetwork{
      * @return a 48-bit string
      */
     public static String expansion(String r) {
-//        byte[] expandedBytes = new byte[6];
-//        byte[] rBytes = r.getBytes(StandardCharsets.UTF_8);
-//
-//        for (int i = 0; i < 8; i++) {
-//            for (int j = 0; j < 6; j++) {
-//                int expansionIndex = Expansion[i][j];
-//                rBytes[expansionIndex/8] ;
-//            }
-//        }
+        byte[] expandedBytes = new byte[6];
+        byte[] rBytes = r.getBytes(StandardCharsets.UTF_8);
+        for (int i = 0; i < EXPANSION_SIZE; i++) {
+            int expansionIndex = Expansion[i/6][i%6] - 1;
+            expandedBytes[i/8] |= (rBytes[expansionIndex/8] >> getByteIndex(expansionIndex) & 1) << getByteIndex(i);
+        }
+        return new String(expandedBytes, StandardCharsets.UTF_8);
+    }
 
-       return null;
+    /**
+     * Find the position in a byte from index of the entire binary value
+     * @param position - position of the bit
+     * @return an int from 0 to 7
+     */
+    private static int getByteIndex(int position) {
+        return 7 - (position % 8);
+    }
+
+    // TODO: erase
+    private static void printByteArray(byte[] bArray) {
+        for ( Byte b : bArray) {
+            printBinaryString(b);
+        }
     }
     
     /**
@@ -153,6 +170,12 @@ class FeistelNetwork{
      * @return a 32-bit string; combined outputs of the S-boxes
      */
     public static String sBoxes(String input) {
+        // TODO
+        String output;
+        int xIndex = 0, yIndex = 0;
+
+
+
         return null;
     }
     
@@ -162,6 +185,7 @@ class FeistelNetwork{
      * @return a 32-bit string
      */
     public static String pPermutation(String input) {
+        // TODO
         return null;
     }
 }
