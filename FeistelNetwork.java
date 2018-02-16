@@ -139,9 +139,9 @@ class FeistelNetwork{
     public static String expansion(String r) {
         byte[] expandedBytes = new byte[6];
         byte[] rBytes = r.getBytes(StandardCharsets.UTF_8);
-        for (int i = 0; i < EXPANSION_SIZE; i++) {
-            int expansionIndex = Expansion[i/6][i%6] - 1;
-            expandedBytes[i/8] |= (rBytes[expansionIndex/8] >> getByteIndex(expansionIndex) & 1) << getByteIndex(i);
+        for (int index = 0; index < EXPANSION_SIZE; index++) {
+            int expansionIndex = Expansion[index/6][index%6] - 1;
+            expandedBytes[index/8] |= (rBytes[expansionIndex/8] >> getByteIndex(expansionIndex) & 1) << getByteIndex(index);
         }
         return new String(expandedBytes, StandardCharsets.UTF_8);
     }
@@ -171,12 +171,33 @@ class FeistelNetwork{
      */
     public static String sBoxes(String input) {
         // TODO
-        String output;
+        byte[] outputBytes = new byte[4];
+        byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
         int xIndex = 0, yIndex = 0;
+        int sixBitBlock = 0;
+        int sValue = 0;
+        int sIteration = 0;
+        int count = 1;
+        for (int index = 0; index < EXPANSION_SIZE; index += 6) {
+            if (isWithinOneByte(index)) {
+                sixBitBlock |= (inputBytes[index/8] >> (2 - (index % 8))) & 63;
+            } else {
+
+            }
 
 
+            xIndex = ((sixBitBlock >> 5) << 1) | (sixBitBlock & 1);
+            yIndex |= ((sixBitBlock >> 1) & 15);
+            sValue = SBoxes[sValue][xIndex][yIndex];
+            outputBytes[index/8] |= sValue << (4 * (count++ % 2));
+            printBinaryString(outputBytes[index/8]);
+        }
 
         return null;
+    }
+
+    private static boolean isWithinOneByte(int index) {
+        return (index + 5) % 8 > index;
     }
     
     /**
