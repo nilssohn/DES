@@ -7,8 +7,6 @@ import java.nio.charset.StandardCharsets;
 */
 class FeistelNetwork{
     /* Initialize lookup tables */
-    private static int iterationCount = 0;
-    private static final int EXPANSION_SIZE = 48;
 
     private static final int[][] Expansion =
     {
@@ -89,9 +87,12 @@ class FeistelNetwork{
      */
     public static String iterate(String input, String[] subkeys){
         String left, right;
+        int iterationCount = 0;
         left = input.substring(input.length()/2);
         right =  input.substring(0, input.length()/2);
-        right = xor(right, fFunction(left, subkeys[iterationCount++]));
+        while(iterationCount < 16) {
+            right = xor(right, fFunction(left, subkeys[iterationCount++]));
+        }
         return left + right ;
     }
     
@@ -105,9 +106,7 @@ class FeistelNetwork{
      * @return a 32-bit output F(r, key)
      */
     public static String fFunction(String r, String key) {
-        // TODO: last
-
-        return r;
+        return pPermutation(sBoxes(xor(expansion(r), key)));
     }
     
     /**
@@ -117,49 +116,31 @@ class FeistelNetwork{
      * @return resulting string of the XOR operation
      */
     public static String xor(String firstInput, String secondInput) {
-        byte[] firstBytes = firstInput.getBytes(StandardCharsets.UTF_8);
-        byte[] secondBytes = secondInput.getBytes(StandardCharsets.UTF_8);
-        int byteArraySize = firstBytes.length;
-        byte[] finalBytes = new byte[byteArraySize];
-        for(int i = 0; i < byteArraySize; i++) {
-            finalBytes[i] = (byte) (((int) firstBytes[i]) ^ ((int) secondBytes[i]));
+        char[] firstInputBits = firstInput.toCharArray();
+        char[] secondInputBits = secondInput.toCharArray();
+        char[] finalBits = new char[firstInputBits.length];
+        for ( int index = 0; index < firstInputBits.length; index++ ) {
+            if (firstInputBits[index] != secondInputBits[index]) {
+                finalBits[index] = '1';
+            } else {
+                finalBits[index] = '0';
+            }
         }
-        return new String(firstBytes, StandardCharsets.UTF_8);
+        return new String(finalBits);
     }
 
-    private static void printBinaryString(byte b) {
-        System.out.println(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
-    }
-    
     /**
      * Expand 32-bit input to 48-bit result using the expansion substitution table
      * @param r - right half of the input to expand
      * @return a 48-bit string
      */
     public static String expansion(String r) {
-        byte[] expandedBytes = new byte[6];
-        byte[] rBytes = r.getBytes(StandardCharsets.UTF_8);
-        for (int index = 0; index < EXPANSION_SIZE; index++) {
-            int expansionIndex = Expansion[index/6][index%6] - 1;
-            expandedBytes[index/8] |= (rBytes[expansionIndex/8] >> getByteIndex(expansionIndex) & 1) << getByteIndex(index);
+        char[] expandedBits = new char[48];
+        char[] rBits = r.toCharArray();
+        for ( int index = 0; index < 48; index++ ) {
+            expandedBits[index] = rBits[Expansion[index / 6][index % 6] - 1];
         }
-        return new String(expandedBytes, StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Find the position in a byte from index of the entire binary value
-     * @param position - position of the bit
-     * @return an int from 0 to 7
-     */
-    private static int getByteIndex(int position) {
-        return 7 - (position % 8);
-    }
-
-    // TODO: erase
-    private static void printByteArray(byte[] bArray) {
-        for ( Byte b : bArray) {
-            printBinaryString(b);
-        }
+        return new String(expandedBits);
     }
     
     /**
@@ -170,46 +151,29 @@ class FeistelNetwork{
      * @return a 32-bit string; combined outputs of the S-boxes
      */
     public static String sBoxes(String input) {
-        byte[] outputBytes = new byte[4];
-        byte sixBitBlock = 0;
-        byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
-        int xIndex = 0, yIndex = 0;
-        int sValue = 0;
-        int sIteration = 0;
-        int count = 1;
+        StringBuilder output = new StringBuilder();
+        String sixBits, buffer;
+        int x = 0;
+        int y = 0;
+        int sBoxVal = 0;
 
-        for (int index = 0; index < EXPANSION_SIZE; index += 6) {
-            sixBitBlock = 0;
-            xIndex = 0;
-            yIndex = 0;
-            if (isWithinOneByte(index)) {
-                sixBitBlock |= (inputBytes[index/8] >> (2 - (index % 8))) & 63;
-            } else {
-                sixBitBlock |= ((inputBytes[index/8]) & (255 >> (8 - getByteIndex(index))))
-                            << (5 - getByteIndex(index));
-                sixBitBlock |= ((inputBytes[(index / 8) + 1])) >> (3 + getByteIndex(index));
-            }
+        for (int index = 0; index < 48; index += 6) {
+            sixBits = input.substring(index, index + 6);
+            buffer = sixBits.charAt(0) + sixBits.substring(5, 6);
+            x = Integer.parseInt(buffer, 2);
+            buffer = sixBits.substring(1, 5);
+            y = Integer.parseInt(buffer, 2);
+            buffer = formatIntToPaddedBinaryString(SBoxes[sBoxVal][x][y], 4);
+            output.append(buffer);
 
-            if ((int) sixBitBlock > 32) {
-                xIndex = ((sixBitBlock >> 5) << 1) | (sixBitBlock & 1);
-                yIndex = ((sixBitBlock >> 1) & 15);
-            } else {
-                xIndex = sixBitBlock & 1;
-                yIndex = sixBitBlock >> 1;
-            }
-
-            sValue = SBoxes[count - 1][xIndex][yIndex];
-            outputBytes[(count-1)/2] |= sValue << (4 * (count % 2));
-            count++;
         }
-
-        printByteArray(outputBytes);
-        return new String(outputBytes, StandardCharsets.UTF_8);
+        return output.toString();
     }
 
-    private static boolean isWithinOneByte(int index) {
-        return ((index + 5) % 8) > (index) % 8;
+    private static String formatIntToPaddedBinaryString(int i, int length) {
+        return String.format("%" + length + "s", Integer.toBinaryString(1)).replace(' ', '0');
     }
+
     
     /**
      * Permutes 32-bit input using the P permutation table
@@ -217,16 +181,10 @@ class FeistelNetwork{
      * @return a 32-bit string
      */
     public static String pPermutation(String input) {
-        byte[] outputBytes = new byte[4];
-        byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
-        int pIndex = 0;
-        printByteArray(inputBytes);
+        char[] output = new char[32];
         for (int index = 0; index < 32; index++){
-            pIndex = PPermutation[index/8][index % 8] - 1;
-            outputBytes[index/8] |= (inputBytes[pIndex/8] >> getByteIndex(pIndex) & 1)
-                                 << getByteIndex(index);
+            output[index] = input.charAt(PPermutation[index / 8][index % 8] - 1);
         }
-
-        return new String(outputBytes, StandardCharsets.UTF_8);
+        return new String(output);
     }
 }

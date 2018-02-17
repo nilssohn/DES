@@ -24,10 +24,12 @@ class KeySchedule{
       @return 56-bit string to be fed to 16 rounds of transformation
    */
    public static String pc_1(String key){
+       char[] output = new char[56];
+       for(int index = 0; index < 56; index++) {
+           output[index] = key.charAt(PC_1[index / 8][index % 8] - 1);
+       }
        
-       //TO BE COMPLETED
-       
-       return null;       
+       return new String(output);
    }
    /**
       Permuted Choice - 2
@@ -35,10 +37,12 @@ class KeySchedule{
       @return 48-bit subkey
    */
    public static String pc_2(String input){
-      
-       //TO BE COMPLETED
-       
-       return null;       
+       char[] output = new char[48];
+       for(int index = 0; index < 48; index++) {
+           output[index] = input.charAt(PC_2[index / 8][index % 8] - 1);
+       }
+
+       return new String(output);
    }
 
     /**
@@ -47,27 +51,24 @@ class KeySchedule{
      @return an array of 16 subkeys
      */
     public static String[] generateSubkeysForEncryption(String key){
-        // TODO
         String[] subkeys = new String[16];
-//        String firstOutput = pc_1(key);
-//        String c = firstOutput.substring(0, 28);
-//        String d = firstOutput.substring(28);
-//
-//        for(int round = 1; round <= 16; round++) {
-//            if (round == 1) {
-//                ; // don't shift
-//            } else if (round == 2 || round == 9 || round == 16) {
-//                // right shift by 1 bit
-//                c = c.charAt(27) + c.substring(0, 27);
-//                d = d.charAt(27) + d.substring(0, 27);
-//            } else {
-//                // right shift by 2 bits
-//                c = c.substring(26, 28) + c.substring(0, 26);
-//                d = d.substring(26, 28) + d.substring(0, 26);
-//            }
-//            // combine c+d, PC-2 substitution, store in subkeys array
-//            subkeys[round-1] = pc_2(c + d);
-//        }
+        String firstOutput = pc_1(key);
+        String c = firstOutput.substring(0, 28);
+        String d = firstOutput.substring(28);
+
+        for(int round = 1; round <= 16; round++) {
+           if (round == 1 || round == 2 || round == 9 || round == 16) {
+                // left shift by 1 bit
+                c = c.substring(1) + c.charAt(0);
+                d = d.substring(0, 27) + d.charAt(0);
+            } else {
+                // left shift by 2 bits
+                c = d.substring(2) + c.substring(0, 2);
+                d = d.substring(2) + d.substring(0, 2);
+            }
+            // combine c+d, PC-2 substitution, store in subkeys array
+            subkeys[round-1] = pc_2(c + d);
+        }
         return subkeys;
     }
 
