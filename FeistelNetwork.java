@@ -170,34 +170,45 @@ class FeistelNetwork{
      * @return a 32-bit string; combined outputs of the S-boxes
      */
     public static String sBoxes(String input) {
-        // TODO
         byte[] outputBytes = new byte[4];
+        byte sixBitBlock = 0;
         byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
         int xIndex = 0, yIndex = 0;
-        int sixBitBlock = 0;
         int sValue = 0;
         int sIteration = 0;
         int count = 1;
+
         for (int index = 0; index < EXPANSION_SIZE; index += 6) {
+            sixBitBlock = 0;
+            xIndex = 0;
+            yIndex = 0;
             if (isWithinOneByte(index)) {
                 sixBitBlock |= (inputBytes[index/8] >> (2 - (index % 8))) & 63;
             } else {
-
+                sixBitBlock |= ((inputBytes[index/8]) & (255 >> (8 - getByteIndex(index))))
+                            << (5 - getByteIndex(index));
+                sixBitBlock |= ((inputBytes[(index / 8) + 1])) >> (3 + getByteIndex(index));
             }
 
+            if ((int) sixBitBlock > 32) {
+                xIndex = ((sixBitBlock >> 5) << 1) | (sixBitBlock & 1);
+                yIndex = ((sixBitBlock >> 1) & 15);
+            } else {
+                xIndex = sixBitBlock & 1;
+                yIndex = sixBitBlock >> 1;
+            }
 
-            xIndex = ((sixBitBlock >> 5) << 1) | (sixBitBlock & 1);
-            yIndex |= ((sixBitBlock >> 1) & 15);
-            sValue = SBoxes[sValue][xIndex][yIndex];
-            outputBytes[index/8] |= sValue << (4 * (count++ % 2));
-            printBinaryString(outputBytes[index/8]);
+            sValue = SBoxes[count - 1][xIndex][yIndex];
+            outputBytes[(count-1)/2] |= sValue << (4 * (count % 2));
+            count++;
         }
 
-        return null;
+        printByteArray(outputBytes);
+        return new String(outputBytes, StandardCharsets.UTF_8);
     }
 
     private static boolean isWithinOneByte(int index) {
-        return (index + 5) % 8 > index;
+        return ((index + 5) % 8) > (index) % 8;
     }
     
     /**
@@ -206,7 +217,16 @@ class FeistelNetwork{
      * @return a 32-bit string
      */
     public static String pPermutation(String input) {
-        // TODO
-        return null;
+        byte[] outputBytes = new byte[4];
+        byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
+        int pIndex = 0;
+        printByteArray(inputBytes);
+        for (int index = 0; index < 32; index++){
+            pIndex = PPermutation[index/8][index % 8] - 1;
+            outputBytes[index/8] |= (inputBytes[pIndex/8] >> getByteIndex(pIndex) & 1)
+                                 << getByteIndex(index);
+        }
+
+        return new String(outputBytes, StandardCharsets.UTF_8);
     }
 }
